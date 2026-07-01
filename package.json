@@ -1,11 +1,7 @@
 {
   "name": "bike-tug-of-war",
   "version": "1.0.0",
-  "scripts": {
-    "start": "node server.js"
-  },
   "dependencies": {
-    "pusher": "^5.2.0",
-    "tiktok-live-connector": "^1.0.0"
+    "pusher": "^5.2.0"
   }
 }
