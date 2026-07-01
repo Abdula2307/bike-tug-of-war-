@@ -1,5 +1,23 @@
 {
   "version": 2,
+  "builds": [
+    {
+      "src": "api/tiktok.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "*.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "*.png",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "*.mp3",
+      "use": "@vercel/static"
+    }
+  ],
   "routes": [
     { "src": "/api/tiktok", "dest": "/api/tiktok.js" },
     { "src": "/(.*)", "dest": "/$1" }
