@@ -1,7 +1,14 @@
 {
   "version": 2,
+  "functions": {
+    "api/tiktok.js": {
+      "memory": 128,
+      "maxDuration": 10
+    }
+  },
   "routes": [
-    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/api/tiktok", "dest": "/api/tiktok.js" },
     { "src": "/(.*)", "dest": "/$1" }
-  ]
+  ],
+  "ignoreCommand": "server.js"
 }
