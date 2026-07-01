@@ -1,7 +1,1 @@
-{
-  "version": 2,
-  "routes": [
-    { "src": "/api/tiktok", "dest": "/api/tiktok.js" },
-    { "src": "/(.*)", "dest": "/$1" }
-  ]
-}
+
