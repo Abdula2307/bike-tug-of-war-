@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bike Tug of War</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Inter:wght@400;700&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        :root {
+            --pink: #ff2d78;
+            --pink-glow: rgba(255, 45, 120, 0.6);
+            --blue: #00b4ff;
+            --blue-glow: rgba(0, 180, 255, 0.6);
+            --dark: #080b14;
+        }
+
+        html, body {
+            background: var(--dark);
+            color: white;
+            overflow: hidden;
+            user-select: none;
+            font-family: 'Inter', Arial, sans-serif;
+            height: 100%;
+            width: 100%;
+            position: fixed;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        #stars-canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── CONNECTION STATUS ── */
+        #status-bar {
+            position: fixed;
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            background: rgba(8,11,20,0.9);
+            border-radius: 20px;
+            padding: 4px 14px;
+            font-size: 0.65rem;
+            letter-spacing: 1px;
+            border: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            backdrop-filter: blur(10px);
+        }
+        #status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #ff4444;
+            transition: background 0.3s;
+        }
+        #status-dot.connected { background: #44ff88; }
+        #status-text { opacity: 0.7; }
+
+        /* ── ARENA ── */
+        .arena {
+            position: relative;
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            z-index: 1;
+            min-height: 0;
+        }
+
+        .side {
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            transition: width 0.4s cubic-bezier(0.4,0,0.2,1);
+        }
+
+        .side-pink {
+            width: 50%;
+            justify-content: flex-end;
+            background: linear-gradient(90deg, #1a0010 0%, #3d0025 60%, #6b0040 100%);
+        }
+
+        .side-blue {
+            width: 50%;
+            justify-content: flex-start;
+            background: linear-gradient(90deg, #002d47 0%, #00527a 50%, #001a2e 100%);
+        }
+
+        .side-pink .side-bg { background-image: url('backgroundgirl.png'); }
+        .side-blue .side-bg { background-image: url('backgroundguy.png'); }
+
+        .side-pink .side-bg,
+        .side-blue .side-bg {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            z-index: 0;
+        }
+
+        .side::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 4px);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .side-pink::before {
+            content: '';
+            position: absolute;
+            right: 0; top: 0; bottom: 0;
+            width: 5px;
+            background: var(--pink);
+            box-shadow: 0 0 20px 6px var(--pink-glow);
+            z-index: 3;
+        }
+
+        .side-blue::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 5px;
+            background: var(--blue);
+            box-shadow: 0 0 20px 6px var(--blue-glow);
+            z-index: 3;
+        }
+
+        /* ── BADGES ── */
+        .side-badge {
+            position: absolute;
+            z-index: 6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            top: 22px;
+        }
+        .side-badge.pink-badge { right: 10px; }
+        .side-badge.blue-badge { left: 10px; }
+
+        .fighter-name {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(0.55rem, 2.5vw, 0.9rem);
+            font-weight: 900;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 4px 12px;
+            border-radius: 30px;
+            white-space: nowrap;
+        }
+        .side-pink .fighter-name {
+            background: rgba(255,45,120,0.15);
+            border: 1.5px solid var(--pink);
+            color: #ffb3d0;
+            text-shadow: 0 0 12px var(--pink);
+        }
+        .side-blue .fighter-name {
+            background: rgba(0,180,255,0.12);
+            border: 1.5px solid var(--blue);
+            color: #b3e8ff;
+            text-shadow: 0 0 12px var(--blue);
+        }
+
+        .pct-badge {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(1.2rem, 5vw, 1.8rem);
+            font-weight: 900;
+        }
+        .side-pink .pct-badge { color: var(--pink); text-shadow: 0 0 20px var(--pink-glow); }
+        .side-blue .pct-badge { color: var(--blue); text-shadow: 0 0 20px var(--blue-glow); }
+
+        /* ── SCORE BOXES ── */
+        .score-box {
+            position: absolute;
+            bottom: 12px;
+            z-index: 20;
+            background: rgba(8,11,20,0.85);
+            border-radius: 10px;
+            padding: 6px 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            backdrop-filter: blur(10px);
+            min-width: 54px;
+        }
+        .score-box.pink-score { right: 10px; border: 1.5px solid var(--pink); }
+        .score-box.blue-score { left: 10px;  border: 1.5px solid var(--blue); }
+        .score-label { font-size: 0.5rem; letter-spacing: 2px; text-transform: uppercase; opacity: 0.6; }
+        .score-value { font-family: 'Orbitron', monospace; font-size: clamp(1rem, 4vw, 1.4rem); font-weight: 900; }
+        .pink-score .score-value { color: var(--pink); }
+        .blue-score  .score-value { color: var(--blue); }
+
+        /* ── FIGHTERS ── */
+        .fighters-wrapper {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .fighter-slot {
+            position: absolute;
+            bottom: clamp(60px, 12vw, 90px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .bike-img {
+            width: clamp(90px, 22vw, 180px);
+            height: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 0 14px rgba(255,255,255,0.15));
+            display: block;
+        }
+
+        @keyframes bump { 0%,100%{transform:scale(1)} 40%{transform:scale(1.18) rotate(2deg)} }
+        @keyframes bump-guy { 0%,100%{transform:scale(1)} 40%{transform:scale(1.18) rotate(-2deg)} }
+        @keyframes super-bump { 0%,100%{transform:scale(1)} 30%{transform:scale(1.4) rotate(-3deg)} 60%{transform:scale(0.95)} }
+        @keyframes super-bump-guy { 0%,100%{transform:scale(1)} 30%{transform:scale(1.4) rotate(3deg)} 60%{transform:scale(0.95)} }
+
+        .girl-hit       { animation: bump 0.22s ease-out !important; }
+        .girl-super-hit { animation: super-bump 0.35s ease-out !important; }
+        .guy-hit        { animation: bump-guy 0.22s ease-out !important; }
+        .guy-super-hit  { animation: super-bump-guy 0.35s ease-out !important; }
+
+        /* ── CENTER ── */
+        .center-bar {
+            position: absolute;
+            left: 50%;
+            top: 0; bottom: 0;
+            width: 4px;
+            background: white;
+            transform: translateX(-50%);
+            z-index: 10;
+            box-shadow: 0 0 20px 5px rgba(255,255,255,0.5);
+            transition: left 0.4s cubic-bezier(0.4,0,0.2,1);
+        }
+
+        .center-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: clamp(32px, 8vw, 44px);
+            height: clamp(32px, 8vw, 44px);
+            background: white;
+            border-radius: 50%;
+            z-index: 11;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(1rem, 3vw, 1.4rem);
+            box-shadow: 0 0 30px rgba(255,255,255,0.6);
+            transition: left 0.4s cubic-bezier(0.4,0,0.2,1);
+        }
+
+        /* ── CANVASES ── */
+        #lightning-canvas, #firework-canvas {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 15;
+        }
+
+        /* ── WINNER FLASH ── */
+        .winner-flash {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(1.8rem, 7vw, 4rem);
+            font-weight: 900;
+            letter-spacing: 3px;
+            opacity: 0;
+            pointer-events: none;
+            text-align: center;
+            padding: 20px;
+        }
+        .winner-flash.show {
+            opacity: 1;
+            animation: flash-in 2s ease forwards;
+        }
+        @keyframes flash-in {
+            0%   { opacity: 0; transform: scale(0.5); }
+            20%  { opacity: 1; transform: scale(1.1); }
+            70%  { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(1.2); }
+        }
+
+        /* ── LEGEND ── */
+        .legend {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(8,11,20,0.82);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 10px;
+            padding: 5px 7px;
+            z-index: 20;
+            backdrop-filter: blur(10px);
+        }
+        .legend-title {
+            font-size: 0.5rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.4);
+            margin-bottom: 4px;
+        }
+        .legend img {
+            width: clamp(70px, 18vw, 100px);
+            height: auto;
+            display: block;
+            border-radius: 6px;
+            opacity: 0.85;
+        }
+
+        /* ── CONTROLS ── */
+        .controls {
+            height: clamp(70px, 18vw, 100px);
+            background: #0d1117;
+            border-top: 1px solid rgba(255,255,255,0.07);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: clamp(6px, 2vw, 14px);
+            z-index: 20;
+            position: relative;
+            padding: 0 8px;
+            flex-shrink: 0;
+        }
+
+        .btn {
+            padding: clamp(8px, 2vw, 12px) clamp(10px, 3vw, 22px);
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(0.5rem, 1.8vw, 0.75rem);
+            font-weight: 700;
+            letter-spacing: 1px;
+            cursor: pointer;
+            border: none;
+            border-radius: 10px;
+            text-transform: uppercase;
+            transition: transform 0.1s, box-shadow 0.1s;
+            touch-action: manipulation;
+            flex: 1;
+            max-width: 130px;
+            white-space: nowrap;
+        }
+        .btn:active { transform: scale(0.92); }
+
+        .btn-pink       { background: linear-gradient(135deg, #c2185b, #e91e8c); color: white; box-shadow: 0 0 14px rgba(233,30,140,0.4); }
+        .btn-blue       { background: linear-gradient(135deg, #0277bd, #00b4ff); color: white; box-shadow: 0 0 14px rgba(0,180,255,0.4); }
+        .btn-super-pink { background: linear-gradient(135deg, #880e4f, #ff1744); color: white; box-shadow: 0 0 18px rgba(255,23,68,0.5); }
+        .btn-super-blue { background: linear-gradient(135deg, #01579b, #00e5ff); color: white; box-shadow: 0 0 18px rgba(0,229,255,0.5); }
+    </style>
+</head>
+<body>
+
+<canvas id="stars-canvas"></canvas>
+
+<div id="status-bar">
+    <div id="status-dot"></div>
+    <span id="status-text">CONNECTING...</span>
+</div>
+
+<div class="arena" id="arena">
+
+    <div class="side side-pink" id="pink-side">
+        <div class="side-bg"></div>
+        <div class="side-badge pink-badge">
+            <div class="fighter-name">GIRLS</div>
+            <div class="pct-badge" id="pink-pct">50%</div>
+        </div>
+        <div class="score-box pink-score">
+            <div class="score-label">WINS</div>
+            <div class="score-value" id="girl-score">0</div>
+        </div>
+    </div>
+
+    <div class="side side-blue" id="blue-side">
+        <div class="side-bg"></div>
+        <div class="side-badge blue-badge">
+            <div class="fighter-name">BOYS</div>
+            <div class="pct-badge" id="blue-pct">50%</div>
+        </div>
+        <div class="score-box blue-score">
+            <div class="score-label">WINS</div>
+            <div class="score-value" id="guy-score">0</div>
+        </div>
+    </div>
+
+    <div class="fighters-wrapper" id="fighters-wrapper">
+        <div class="fighter-slot girl-slot" id="girl-slot">
+            <img src="girl.png" alt="Girl" class="bike-img" id="girl-img">
+        </div>
+        <div class="fighter-slot guy-slot" id="guy-slot">
+            <img src="guy.png" alt="Guy" class="bike-img" id="guy-img">
+        </div>
+    </div>
+
+    <div class="center-bar"  id="center-bar"></div>
+    <div class="center-icon" id="center-icon">⚡</div>
+
+    <canvas id="lightning-canvas"></canvas>
+    <canvas id="firework-canvas"></canvas>
+
+    <div class="winner-flash" id="winner-flash"></div>
+
+    <div class="legend">
+        <div class="legend-title">How to play</div>
+        <img src="image_871cc1.png" alt="Gift guide">
+    </div>
+
+</div>
+
+<div class="controls">
+    <button class="btn btn-pink"       ontouchstart="moveTugOfWar('female')"       onclick="moveTugOfWar('female')">🌸 Pink +1</button>
+    <button class="btn btn-super-pink" ontouchstart="moveTugOfWar('super_female')" onclick="moveTugOfWar('super_female')">🔥 SUPER +3</button>
+    <button class="btn btn-super-blue" ontouchstart="moveTugOfWar('super_male')"   onclick="moveTugOfWar('super_male')">🔥 SUPER +3</button>
+    <button class="btn btn-blue"       ontouchstart="moveTugOfWar('male')"         onclick="moveTugOfWar('male')">💙 Blue +1</button>
+</div>
+
+<!-- Pusher SDK -->
+<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+
+<script>
+// ── PUSHER CONNECT ──
+const pusher = new Pusher('b5805a7e3fff9d836f8d', { cluster: 'eu' });
+const channel = pusher.subscribe('tug-of-war');
+
+const statusDot  = document.getElementById('status-dot');
+const statusText = document.getElementById('status-text');
+
+pusher.connection.bind('connected', () => {
+    statusDot.classList.add('connected');
+    statusText.textContent = 'LIVE ✓';
+});
+pusher.connection.bind('disconnected', () => {
+    statusDot.classList.remove('connected');
+    statusText.textContent = 'DISCONNECTED';
+});
+pusher.connection.bind('connecting', () => {
+    statusDot.classList.remove('connected');
+    statusText.textContent = 'CONNECTING...';
+});
+
+channel.bind('gift', ({ command }) => {
+    if      (command === 'girl')      moveTugOfWar('female');
+    else if (command === 'superGirl') moveTugOfWar('super_female');
+    else if (command === 'boy')       moveTugOfWar('male');
+    else if (command === 'superBoy')  moveTugOfWar('super_male');
+});
+
+// ── AUDIO ──
+const girlAudio = new Audio('girl.mp3');
+const guyAudio  = new Audio('guy.mp3');
+
+function playSound(isFemale) {
+    try {
+        const audio = isFemale ? girlAudio : guyAudio;
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
+    } catch(e) {}
+}
+
+// ── STATE ──
+let femaleWidth = 50;
+let girlWins = 0;
+let guyWins  = 0;
+let roundOver = false;
+
+const PTS_STD   = 1;
+const PTS_SUPER = 3;
+
+const pinkSide    = document.getElementById('pink-side');
+const blueSide    = document.getElementById('blue-side');
+const pinkPct     = document.getElementById('pink-pct');
+const bluePct     = document.getElementById('blue-pct');
+const girlImg     = document.getElementById('girl-img');
+const guyImg      = document.getElementById('guy-img');
+const girlSlot    = document.getElementById('girl-slot');
+const guySlot     = document.getElementById('guy-slot');
+const arena       = document.getElementById('arena');
+const centerBar   = document.getElementById('center-bar');
+const centerIcon  = document.getElementById('center-icon');
+const winFlash    = document.getElementById('winner-flash');
+const girlScoreEl = document.getElementById('girl-score');
+const guyScoreEl  = document.getElementById('guy-score');
+
+const GIRL_NORMAL = 'girl.png';
+const GIRL_SAD    = 'sadgirl.png';
+const GIRL_SUPER  = 'supergirl.png';
+const GUY_NORMAL  = 'guy.png';
+const GUY_SAD     = 'sadguy.png';
+const GUY_SUPER   = 'superguy.png';
+
+// ── STARS ──
+const starsCanvas = document.getElementById('stars-canvas');
+const sc = starsCanvas.getContext('2d');
+let stars = [];
+
+function initStars() {
+    starsCanvas.width  = window.innerWidth;
+    starsCanvas.height = window.innerHeight;
+    stars = [];
+    for (let i = 0; i < 180; i++) {
+        stars.push({
+            x: Math.random() * starsCanvas.width,
+            y: Math.random() * starsCanvas.height,
+            r: Math.random() * 1.2 + 0.2,
+            a: Math.random(),
+            da: (Math.random() * 0.006 + 0.002) * (Math.random() < 0.5 ? 1 : -1)
+        });
+    }
+}
+function animateStars() {
+    sc.clearRect(0, 0, starsCanvas.width, starsCanvas.height);
+    stars.forEach(s => {
+        s.a += s.da;
+        if (s.a > 1 || s.a < 0) s.da *= -1;
+        sc.beginPath();
+        sc.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        sc.fillStyle = `rgba(255,255,255,${s.a.toFixed(2)})`;
+        sc.fill();
+    });
+    requestAnimationFrame(animateStars);
+}
+initStars();
+animateStars();
+window.addEventListener('resize', () => { initStars(); render(); resizeCanvases(); });
+
+// ── LIGHTNING ──
+const lc = document.getElementById('lightning-canvas');
+const lx = lc.getContext('2d');
+let lightningBolts = [];
+
+function resizeCanvases() {
+    lc.width = fw.width = arena.offsetWidth;
+    lc.height = fw.height = arena.offsetHeight;
+}
+
+function spawnLightning(x, y, color, count) {
+    for (let i = 0; i < count; i++) {
+        lightningBolts.push({
+            x, y,
+            angle: Math.random() * Math.PI * 2,
+            len: 40 + Math.random() * 70,
+            color,
+            segments: Math.floor(3 + Math.random() * 3),
+            life: 1,
+            decay: 0.12 + Math.random() * 0.08
+        });
+    }
+}
+
+function drawLightning() {
+    lx.clearRect(0, 0, lc.width, lc.height);
+    lightningBolts = lightningBolts.filter(b => b.life > 0);
+    lightningBolts.forEach(b => {
+        lx.save();
+        lx.globalAlpha = b.life;
+        lx.strokeStyle = b.color;
+        lx.lineWidth = b.life * 2;
+        lx.shadowColor = b.color;
+        lx.shadowBlur = 8;
+        lx.beginPath();
+        let cx = b.x, cy = b.y;
+        const segLen = b.len / b.segments;
+        lx.moveTo(cx, cy);
+        for (let i = 0; i < b.segments; i++) {
+            cx += Math.cos(b.angle) * segLen + (Math.random() - 0.5) * 20;
+            cy += Math.sin(b.angle) * segLen + (Math.random() - 0.5) * 20;
+            lx.lineTo(cx, cy);
+        }
+        lx.stroke();
+        lx.restore();
+        b.life -= b.decay;
+    });
+    requestAnimationFrame(drawLightning);
+}
+drawLightning();
+
+// ── FIREWORKS ──
+const fw = document.getElementById('firework-canvas');
+const fx = fw.getContext('2d');
+let particles = [];
+
+function spawnFireworks(x, y, color, isSuper) {
+    const clusters = isSuper ? 2 : 1;
+    for (let c = 0; c < clusters; c++) {
+        const ox = x + (Math.random() - 0.5) * 70;
+        const oy = y + (Math.random() - 0.5) * 50;
+        const pCount = isSuper ? 18 : 10;
+        for (let i = 0; i < pCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 1.5 + Math.random() * (isSuper ? 3 : 2);
+            particles.push({
+                x: ox, y: oy,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                life: 1,
+                decay: 0.035 + Math.random() * 0.025,
+                size: 1.5 + Math.random() * 2,
+                color: Math.random() < 0.15 ? '#ffe566' : color,
+                gravity: 0.08
+            });
+        }
+        spawnLightning(ox, oy, color, isSuper ? 2 : 1);
+    }
+}
+
+function animateFireworks() {
+    fx.clearRect(0, 0, fw.width, fw.height);
+    particles = particles.filter(p => p.life > 0);
+    particles.forEach(p => {
+        fx.globalAlpha = p.life;
+        fx.shadowColor = p.color;
+        fx.shadowBlur  = 5;
+        fx.beginPath();
+        fx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        fx.fillStyle = p.color;
+        fx.fill();
+        fx.shadowBlur  = 0;
+        fx.globalAlpha = 1;
+        p.x  += p.vx;
+        p.y  += p.vy;
+        p.vy += p.gravity;
+        p.vx *= 0.97;
+        p.life -= p.decay;
+    });
+    requestAnimationFrame(animateFireworks);
+}
+animateFireworks();
+
+// ── IMAGES ──
+function updateImages() {
+    girlImg.src = femaleWidth < 40 ? GIRL_SAD : femaleWidth > 60 ? GIRL_SUPER : GIRL_NORMAL;
+    guyImg.src  = femaleWidth > 60 ? GUY_SAD  : femaleWidth < 40 ? GUY_SUPER  : GUY_NORMAL;
+
+    const girlPct = femaleWidth;
+    const guyPct  = 100 - femaleWidth;
+    const girlScale = Math.max(0.4, girlPct / 50);
+    const guyScale  = Math.max(0.4, guyPct  / 50);
+    const baseW = Math.min(arena.offsetWidth * 0.22, 180);
+
+    if (girlPct < guyPct) {
+        girlImg.style.width = (baseW * girlScale) + 'px';
+        guyImg.style.width  = baseW + 'px';
+    } else if (guyPct < girlPct) {
+        guyImg.style.width  = (baseW * guyScale) + 'px';
+        girlImg.style.width = baseW + 'px';
+    } else {
+        girlImg.style.width = baseW + 'px';
+        guyImg.style.width  = baseW + 'px';
+    }
+}
+
+function positionFighters() {
+    const arenaW  = arena.offsetWidth;
+    const centreX = arenaW * (femaleWidth / 100);
+    const girlW   = girlImg.offsetWidth || 120;
+    girlSlot.style.left = (centreX - girlW - 4) + 'px';
+    guySlot.style.left  = (centreX + 4) + 'px';
+}
+
+function render() {
+    const maleWidth = 100 - femaleWidth;
+    pinkSide.style.width  = femaleWidth + '%';
+    blueSide.style.width  = maleWidth   + '%';
+    centerBar.style.left  = femaleWidth + '%';
+    centerIcon.style.left = femaleWidth + '%';
+    pinkPct.textContent   = Math.round(femaleWidth) + '%';
+    bluePct.textContent   = Math.round(maleWidth)   + '%';
+    updateImages();
+    requestAnimationFrame(positionFighters);
+}
+
+function triggerBounce(isFemale, isSuper) {
+    if (isFemale) {
+        girlImg.classList.remove('girl-hit', 'girl-super-hit');
+        void girlImg.offsetWidth;
+        girlImg.classList.add(isSuper ? 'girl-super-hit' : 'girl-hit');
+    } else {
+        guyImg.classList.remove('guy-hit', 'guy-super-hit');
+        void guyImg.offsetWidth;
+        guyImg.classList.add(isSuper ? 'guy-super-hit' : 'guy-hit');
+    }
+}
+
+// ── WINNER ──
+function checkWinner() {
+    if (femaleWidth >= 90) {
+        if (roundOver) return true;
+        roundOver = true;
+        girlWins++;
+        girlScoreEl.textContent = girlWins;
+        showWinner('GIRLS WIN! 💖', '#ff2d78');
+        setTimeout(resetRound, 2200);
+        return true;
+    } else if (femaleWidth <= 10) {
+        if (roundOver) return true;
+        roundOver = true;
+        guyWins++;
+        guyScoreEl.textContent = guyWins;
+        showWinner('BOYS WIN! 💙', '#00b4ff');
+        setTimeout(resetRound, 2200);
+        return true;
+    }
+    return false;
+}
+
+function resetRound() {
+    femaleWidth = 50;
+    roundOver = false;
+    render();
+}
+
+function showWinner(text, color) {
+    winFlash.textContent = text;
+    winFlash.style.color = color;
+    winFlash.style.textShadow = `0 0 40px ${color}, 0 0 80px ${color}`;
+    winFlash.classList.remove('show');
+    void winFlash.offsetWidth;
+    winFlash.classList.add('show');
+    setTimeout(() => winFlash.classList.remove('show'), 2200);
+}
+
+// ── MAIN GAME FUNCTION ──
+function moveTugOfWar(winner) {
+    if (roundOver) return;
+    const isSuper  = winner.startsWith('super_');
+    const isFemale = winner.includes('female');
+    const pts      = isSuper ? PTS_SUPER : PTS_STD;
+    const color    = isFemale ? '#ff2d78' : '#00b4ff';
+
+    playSound(isFemale);
+
+    femaleWidth = isFemale
+        ? Math.min(femaleWidth + pts, 90)
+        : Math.max(femaleWidth - pts, 10);
+
+    triggerBounce(isFemale, isSuper);
+    resizeCanvases();
+
+    const splitX = arena.offsetWidth * (femaleWidth / 100);
+    const midY   = arena.offsetHeight / 2;
+
+    spawnFireworks(splitX, midY, color, isSuper);
+    if (isSuper) {
+        for (let i = 0; i < 3; i++) {
+            spawnLightning(
+                splitX + (Math.random() - 0.5) * 140,
+                midY   + (Math.random() - 0.5) * 100,
+                color, 2
+            );
+        }
+    }
+
+    if (!checkWinner()) render();
+}
+
+// ── INIT ──
+resizeCanvases();
+render();
+</script>
+</body>
+</html>
