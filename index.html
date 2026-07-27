@@ -14,6 +14,7 @@
             --pink-glow: rgba(255, 45, 120, 0.6);
             --blue: #00b4ff;
             --blue-glow: rgba(0, 180, 255, 0.6);
+            --electric: #d6f0ff;
             --dark: #080b14;
         }
 
@@ -140,6 +141,27 @@
             z-index: 3;
         }
 
+        /* Animated rainbow-flow outline around the whole arena — grabs the eye on a feed */
+        .arena::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            z-index: 40;
+            pointer-events: none;
+            border: 5px solid transparent;
+            border-radius: 6px;
+            background: linear-gradient(90deg, var(--pink), #ffd23d, var(--blue), #ffd23d, var(--pink)) border-box;
+            -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            background-size: 300% 100%;
+            animation: outline-flow 5s linear infinite;
+        }
+        @keyframes outline-flow {
+            0%   { background-position: 0% 0%; }
+            100% { background-position: 300% 0%; }
+        }
+
         /* ── BADGES ── */
         .side-badge {
             position: absolute;
@@ -222,35 +244,146 @@
             align-items: center;
         }
 
+        /* Continuous "struggling / shoving" idle motion — exaggerated: both sides lunge toward the center into each other, then get shoved back hard */
+        @keyframes struggle-girl {
+            0%   { transform: translate(0px, 0px) rotate(0deg); }
+            12%  { transform: translate(16px, -5px) rotate(4deg); }
+            26%  { transform: translate(-10px, 3px) rotate(-4deg); }
+            42%  { transform: translate(14px, -6px) rotate(3deg); }
+            58%  { transform: translate(-8px, 4px) rotate(-2.5deg); }
+            74%  { transform: translate(10px, -3px) rotate(2deg); }
+            88%  { transform: translate(-4px, 2px) rotate(-1deg); }
+            100% { transform: translate(0px, 0px) rotate(0deg); }
+        }
+        @keyframes struggle-guy {
+            0%   { transform: translate(0px, 0px) rotate(0deg); }
+            12%  { transform: translate(-16px, -5px) rotate(-4deg); }
+            26%  { transform: translate(10px, 3px) rotate(4deg); }
+            42%  { transform: translate(-14px, -6px) rotate(-3deg); }
+            58%  { transform: translate(8px, 4px) rotate(2.5deg); }
+            74%  { transform: translate(-10px, -3px) rotate(-2deg); }
+            88%  { transform: translate(4px, 2px) rotate(1deg); }
+            100% { transform: translate(0px, 0px) rotate(0deg); }
+        }
+        .girl-slot { animation: struggle-girl 0.5s ease-in-out infinite; }
+        .guy-slot  { animation: struggle-guy 0.5s ease-in-out infinite; }
+
+        /* The clash point in the middle shudders hard in sync, plus a fast electric flicker */
+        @keyframes clash-shake {
+            0%   { margin-left: 0px; }
+            12%  { margin-left: 8px; }
+            26%  { margin-left: -8px; }
+            42%  { margin-left: 7px; }
+            58%  { margin-left: -6px; }
+            74%  { margin-left: 4px; }
+            88%  { margin-left: -2px; }
+            100% { margin-left: 0px; }
+        }
+
         .bike-img {
-            width: clamp(90px, 22vw, 180px);
+            width: clamp(280px, 55vw, 520px);
             height: auto;
             object-fit: contain;
-            filter: drop-shadow(0 0 14px rgba(255,255,255,0.15));
             display: block;
+            transform-origin: center bottom;
         }
+
+        /* Neon color outline glow per character, pulsing hard to look alive on stream */
+        @keyframes glow-pulse-pink {
+            0%, 100% { filter: drop-shadow(0 0 10px var(--pink)) drop-shadow(0 0 22px var(--pink-glow)); }
+            50%      { filter: drop-shadow(0 0 24px var(--pink)) drop-shadow(0 0 48px var(--pink-glow)) drop-shadow(0 0 70px var(--pink-glow)); }
+        }
+        @keyframes glow-pulse-blue {
+            0%, 100% { filter: drop-shadow(0 0 10px var(--blue)) drop-shadow(0 0 22px var(--blue-glow)); }
+            50%      { filter: drop-shadow(0 0 24px var(--blue)) drop-shadow(0 0 48px var(--blue-glow)) drop-shadow(0 0 70px var(--blue-glow)); }
+        }
+        #girl-img { animation: glow-pulse-pink 1s ease-in-out infinite; }
+        #guy-img  { animation: glow-pulse-blue 1s ease-in-out infinite; }
 
         @keyframes bump { 0%,100%{transform:scale(1)} 40%{transform:scale(1.18) rotate(2deg)} }
         @keyframes bump-guy { 0%,100%{transform:scale(1)} 40%{transform:scale(1.18) rotate(-2deg)} }
         @keyframes super-bump { 0%,100%{transform:scale(1)} 30%{transform:scale(1.4) rotate(-3deg)} 60%{transform:scale(0.95)} }
         @keyframes super-bump-guy { 0%,100%{transform:scale(1)} 30%{transform:scale(1.4) rotate(3deg)} 60%{transform:scale(0.95)} }
 
-        .girl-hit       { animation: bump 0.22s ease-out !important; }
-        .girl-super-hit { animation: super-bump 0.35s ease-out !important; }
-        .guy-hit        { animation: bump-guy 0.22s ease-out !important; }
-        .guy-super-hit  { animation: super-bump-guy 0.35s ease-out !important; }
+        .girl-hit       { animation: bump 0.22s ease-out, glow-pulse-pink 1s ease-in-out infinite !important; }
+        .girl-super-hit { animation: super-bump 0.35s ease-out, glow-pulse-pink 1s ease-in-out infinite !important; }
+        .guy-hit        { animation: bump-guy 0.22s ease-out, glow-pulse-blue 1s ease-in-out infinite !important; }
+        .guy-super-hit  { animation: super-bump-guy 0.35s ease-out, glow-pulse-blue 1s ease-in-out infinite !important; }
 
-        /* ── CENTER ── */
+        /* ── HELP COMMENT SPEECH BUBBLES ── */
+        .speech-bubble {
+            position: absolute;
+            top: -66px;
+            left: 50%;
+            transform: translateX(-50%) translateY(10px) scale(0.6);
+            white-space: nowrap;
+            font-family: 'Orbitron', monospace;
+            font-weight: 900;
+            font-size: clamp(0.6rem, 2.2vw, 0.95rem);
+            letter-spacing: 1px;
+            padding: 8px 16px;
+            border-radius: 18px;
+            background: rgba(15, 17, 26, 0.92);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 30;
+            backdrop-filter: blur(6px);
+        }
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -9px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0; height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+        }
+        .bubble-girl {
+            border: 2px solid var(--pink);
+            color: #ffb3d0;
+            text-shadow: 0 0 10px var(--pink);
+            box-shadow: 0 0 18px rgba(255,45,120,0.5);
+        }
+        .bubble-girl::after { border-top: 9px solid var(--pink); }
+        .bubble-guy {
+            border: 2px solid var(--blue);
+            color: #b3e8ff;
+            text-shadow: 0 0 10px var(--blue);
+            box-shadow: 0 0 18px rgba(0,180,255,0.5);
+        }
+        .bubble-guy::after { border-top: 9px solid var(--blue); }
+
+        @keyframes bubble-pop {
+            0%   { opacity: 0; transform: translateX(-50%) translateY(10px) scale(0.5); }
+            15%  { opacity: 1; transform: translateX(-50%) translateY(-6px) scale(1.08); }
+            25%  { opacity: 1; transform: translateX(-50%) translateY(0px) scale(1); }
+            85%  { opacity: 1; transform: translateX(-50%) translateY(0px) scale(1); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-14px) scale(0.85); }
+        }
+        .speech-bubble.show { animation: bubble-pop 2.6s ease-out forwards; }
+
+        /* ── ELECTRIFIED CENTER ── */
         .center-bar {
             position: absolute;
             left: 50%;
             top: 0; bottom: 0;
-            width: 4px;
-            background: white;
+            width: 5px;
+            background: linear-gradient(180deg, var(--electric), #ffffff 20%, var(--electric) 40%, #ffffff 60%, var(--electric) 80%, #ffffff 100%);
+            background-size: 100% 220%;
             transform: translateX(-50%);
             z-index: 10;
-            box-shadow: 0 0 20px 5px rgba(255,255,255,0.5);
+            box-shadow: 0 0 16px 3px #ffffff, 0 0 34px 10px var(--electric), 0 0 70px 22px rgba(0,180,255,0.5);
             transition: left 0.4s cubic-bezier(0.4,0,0.2,1);
+            animation: clash-shake 0.5s ease-in-out infinite, electric-surge 0.16s steps(3) infinite, electric-glow 0.35s ease-in-out infinite;
+        }
+        @keyframes electric-surge {
+            0%   { background-position: 0% 0%; }
+            100% { background-position: 0% 220%; }
+        }
+        @keyframes electric-glow {
+            0%, 100% { box-shadow: 0 0 16px 3px #ffffff, 0 0 34px 10px var(--electric), 0 0 70px 22px rgba(0,180,255,0.5); opacity: 1; }
+            50%      { box-shadow: 0 0 28px 7px #ffffff, 0 0 58px 20px var(--electric), 0 0 105px 36px rgba(255,45,120,0.5); opacity: 0.85; }
         }
 
         .center-icon {
@@ -269,6 +402,7 @@
             font-size: clamp(1rem, 3vw, 1.4rem);
             box-shadow: 0 0 30px rgba(255,255,255,0.6);
             transition: left 0.4s cubic-bezier(0.4,0,0.2,1);
+            animation: clash-shake 0.5s ease-in-out infinite;
         }
 
         /* ── CANVASES ── */
@@ -410,9 +544,11 @@
 
     <div class="fighters-wrapper" id="fighters-wrapper">
         <div class="fighter-slot girl-slot" id="girl-slot">
+            <div class="speech-bubble bubble-girl" id="girl-bubble">GIRL PLZ HELP 🙏</div>
             <img src="girl.png" alt="Girl" class="bike-img" id="girl-img">
         </div>
         <div class="fighter-slot guy-slot" id="guy-slot">
+            <div class="speech-bubble bubble-guy" id="guy-bubble">BOY PLZ HELP 🙏</div>
             <img src="guy.png" alt="Guy" class="bike-img" id="guy-img">
         </div>
     </div>
@@ -499,6 +635,8 @@ const girlImg     = document.getElementById('girl-img');
 const guyImg      = document.getElementById('guy-img');
 const girlSlot    = document.getElementById('girl-slot');
 const guySlot     = document.getElementById('guy-slot');
+const girlBubble  = document.getElementById('girl-bubble');
+const guyBubble   = document.getElementById('guy-bubble');
 const arena       = document.getElementById('arena');
 const centerBar   = document.getElementById('center-bar');
 const centerIcon  = document.getElementById('center-icon');
@@ -572,6 +710,36 @@ function spawnLightning(x, y, color, count) {
     }
 }
 
+// A tight vertical bolt hugging the center bar, for a constantly "electrified" line
+function spawnCenterBolt() {
+    const arenaW  = arena.offsetWidth;
+    const arenaH  = arena.offsetHeight;
+    const cx      = arenaW * (femaleWidth / 100);
+    const startY  = Math.random() * arenaH;
+    const colors  = ['#ffffff', '#d6f0ff', '#ff2d78', '#00b4ff'];
+    const color   = colors[Math.floor(Math.random() * colors.length)];
+
+    lx.save();
+    lx.globalAlpha = 0.9;
+    lx.strokeStyle = color;
+    lx.lineWidth = 1.6;
+    lx.shadowColor = color;
+    lx.shadowBlur = 10;
+    lx.beginPath();
+    let cy = startY;
+    let x  = cx;
+    const boltLen = 26 + Math.random() * 30;
+    const segs = 4;
+    lx.moveTo(x, cy);
+    for (let i = 0; i < segs; i++) {
+        x  += (Math.random() - 0.5) * 14;
+        cy += boltLen / segs;
+        lx.lineTo(x, cy);
+    }
+    lx.stroke();
+    lx.restore();
+}
+
 function drawLightning() {
     lx.clearRect(0, 0, lc.width, lc.height);
     lightningBolts = lightningBolts.filter(b => b.life > 0);
@@ -595,6 +763,8 @@ function drawLightning() {
         lx.restore();
         b.life -= b.decay;
     });
+    // Constant crackle riding the clash line
+    if (!roundOver && Math.random() < 0.85) spawnCenterBolt();
     requestAnimationFrame(drawLightning);
 }
 drawLightning();
@@ -660,7 +830,7 @@ function updateImages() {
     const guyPct  = 100 - femaleWidth;
     const girlScale = Math.max(0.4, girlPct / 50);
     const guyScale  = Math.max(0.4, guyPct  / 50);
-    const baseW = Math.min(arena.offsetWidth * 0.22, 180);
+    const baseW = Math.max(280, Math.min(arena.offsetWidth * 0.6, 520)); // bigger characters for stream visibility
 
     if (girlPct < guyPct) {
         girlImg.style.width = (baseW * girlScale) + 'px';
@@ -778,9 +948,36 @@ function moveTugOfWar(winner) {
     if (!checkWinner()) render();
 }
 
+// ── "PLZ HELP" COMMENT BUBBLES (encourages viewers to gift/comment for their team) ──
+// Whichever side is currently LOSING the tug asks for help first, so it always feels relevant.
+function popBubble(el) {
+    el.classList.remove('show');
+    void el.offsetWidth; // restart animation
+    el.classList.add('show');
+}
+
+function triggerHelpBubbles() {
+    if (roundOver) return;
+    const girlLosing = femaleWidth < 50;
+    if (girlLosing) {
+        popBubble(girlBubble);
+        setTimeout(() => { if (!roundOver) popBubble(guyBubble); }, 350);
+    } else {
+        popBubble(guyBubble);
+        setTimeout(() => { if (!roundOver) popBubble(girlBubble); }, 350);
+    }
+    scheduleNextHelpBubbles();
+}
+
+function scheduleNextHelpBubbles() {
+    const delay = 4000 + Math.random() * 1000; // every 4–5 seconds
+    setTimeout(triggerHelpBubbles, delay);
+}
+
 // ── INIT ──
 resizeCanvases();
 render();
+scheduleNextHelpBubbles();
 </script>
 </body>
 </html>
