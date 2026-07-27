@@ -281,7 +281,7 @@
         }
 
         .bike-img {
-            width: clamp(280px, 55vw, 520px);
+            width: clamp(200px, 40vw, 320px);
             height: auto;
             object-fit: contain;
             display: block;
@@ -830,7 +830,7 @@ function updateImages() {
     const guyPct  = 100 - femaleWidth;
     const girlScale = Math.max(0.4, girlPct / 50);
     const guyScale  = Math.max(0.4, guyPct  / 50);
-    const baseW = Math.max(280, Math.min(arena.offsetWidth * 0.6, 520)); // bigger characters for stream visibility
+    const baseW = Math.max(180, Math.min(arena.offsetWidth * 0.4, 320)); // characters sized for this layout
 
     if (girlPct < guyPct) {
         girlImg.style.width = (baseW * girlScale) + 'px';
