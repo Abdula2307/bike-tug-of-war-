@@ -413,6 +413,29 @@
             z-index: 15;
         }
 
+        /* ── THUNDERSTORM SCREEN FLASH (big sky-lightning strikes) ── */
+        #thunder-flash {
+            position: absolute;
+            inset: 0;
+            z-index: 25;
+            background: white;
+            opacity: 0;
+            pointer-events: none;
+            mix-blend-mode: screen;
+        }
+        #thunder-flash.strike {
+            animation: thunder-flash-anim 0.35s ease-out;
+        }
+        @keyframes thunder-flash-anim {
+            0%   { opacity: 0; }
+            6%   { opacity: 0.85; }
+            14%  { opacity: 0.15; }
+            22%  { opacity: 0.6; }
+            35%  { opacity: 0.05; }
+            50%  { opacity: 0.3; }
+            100% { opacity: 0; }
+        }
+
         /* ── WINNER FLASH ── */
         .winner-flash {
             position: absolute;
@@ -440,6 +463,34 @@
             70%  { opacity: 1; transform: scale(1); }
             100% { opacity: 0; transform: scale(1.2); }
         }
+
+        /* ── HOW TO PLAY (percentage banner) ── */
+        .how-to-play {
+            position: absolute;
+            top: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(8,11,20,0.88);
+            border: 1px solid rgba(255,255,255,0.13);
+            border-radius: 14px;
+            padding: 8px 16px;
+            z-index: 20;
+            backdrop-filter: blur(12px);
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            white-space: nowrap;
+        }
+        .how-to-play-title { font-size: 0.5rem; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,0.35); text-align: center; margin-bottom: 6px; }
+        .cmd-row { display: flex; align-items: center; gap: 7px; }
+        .cmd-chip { font-family: 'Orbitron', monospace; font-size: clamp(0.55rem, 1.8vw, 0.75rem); font-weight: 900; letter-spacing: 1px; padding: 4px 11px; border-radius: 8px; white-space: nowrap; }
+        .cmd-chip.pink-cmd { background: rgba(255,45,120,0.15); border: 1.5px solid var(--pink); color: #ffb3d0; text-shadow: 0 0 10px var(--pink); }
+        .cmd-chip.blue-cmd { background: rgba(0,180,255,0.12); border: 1.5px solid var(--blue); color: #b3e8ff; text-shadow: 0 0 10px var(--blue); }
+        .cmd-label { font-size: clamp(0.5rem, 1.6vw, 0.65rem); color: rgba(255,255,255,0.55); white-space: nowrap; }
+        .cmd-pct { font-family: 'Orbitron', monospace; font-size: clamp(0.55rem, 1.8vw, 0.75rem); font-weight: 900; margin-left: 4px; }
+        .cmd-chip.pink-cmd .cmd-pct { color: #ffb3d0; text-shadow: 0 0 8px var(--pink); }
+        .cmd-chip.blue-cmd .cmd-pct { color: #b3e8ff; text-shadow: 0 0 8px var(--blue); }
+        .cmd-divider { width: 1px; height: 32px; background: rgba(255,255,255,0.1); }
 
         /* ── LEGEND ── */
         .legend {
@@ -544,11 +595,11 @@
 
     <div class="fighters-wrapper" id="fighters-wrapper">
         <div class="fighter-slot girl-slot" id="girl-slot">
-            <div class="speech-bubble bubble-girl" id="girl-bubble">GIRL PLZ HELP 🙏</div>
+            <div class="speech-bubble bubble-girl" id="girl-bubble">SEND GIFT — GIRLS PLZ HELP 🙏</div>
             <img src="girl.png" alt="Girl" class="bike-img" id="girl-img">
         </div>
         <div class="fighter-slot guy-slot" id="guy-slot">
-            <div class="speech-bubble bubble-guy" id="guy-bubble">BOY PLZ HELP 🙏</div>
+            <div class="speech-bubble bubble-guy" id="guy-bubble">SEND GIFT — BOYS PLZ HELP 🙏</div>
             <img src="guy.png" alt="Guy" class="bike-img" id="guy-img">
         </div>
     </div>
@@ -558,11 +609,30 @@
 
     <canvas id="lightning-canvas"></canvas>
     <canvas id="firework-canvas"></canvas>
+    <div id="thunder-flash"></div>
 
     <div class="winner-flash" id="winner-flash"></div>
 
+    <div class="how-to-play">
+        <div>
+            <div class="how-to-play-title">How to Play</div>
+            <div class="cmd-row">
+                <div class="cmd-chip pink-cmd">GIRL <span class="cmd-pct" id="howto-pink-pct">50%</span></div>
+                <div class="cmd-label">Girls 🌸</div>
+            </div>
+        </div>
+        <div class="cmd-divider"></div>
+        <div>
+            <div class="how-to-play-title">&nbsp;</div>
+            <div class="cmd-row">
+                <div class="cmd-chip blue-cmd">BOY <span class="cmd-pct" id="howto-blue-pct">50%</span></div>
+                <div class="cmd-label">Boys 💙</div>
+            </div>
+        </div>
+    </div>
+
     <div class="legend">
-        <div class="legend-title">How to play</div>
+        <div class="legend-title">Gift guide</div>
         <img src="image_871cc1.png" alt="Gift guide">
     </div>
 
@@ -631,6 +701,8 @@ const pinkSide    = document.getElementById('pink-side');
 const blueSide    = document.getElementById('blue-side');
 const pinkPct     = document.getElementById('pink-pct');
 const bluePct     = document.getElementById('blue-pct');
+const howtoPinkPct = document.getElementById('howto-pink-pct');
+const howtoBluePct = document.getElementById('howto-blue-pct');
 const girlImg     = document.getElementById('girl-img');
 const guyImg      = document.getElementById('guy-img');
 const girlSlot    = document.getElementById('girl-slot');
@@ -740,6 +812,86 @@ function spawnCenterBolt() {
     lx.restore();
 }
 
+// ── THUNDERSTORM (big jagged sky-to-ground strikes with screen flash) ──
+const thunderFlashEl = document.getElementById('thunder-flash');
+let skyBolts = [];
+
+function buildJaggedPath(startX, startY, endX, endY, segments, width, branchChance, depth) {
+    const points = [{ x: startX, y: startY }];
+    let x = startX, y = startY;
+    const dx = (endX - startX) / segments;
+    const dy = (endY - startY) / segments;
+    const branches = [];
+    for (let i = 0; i < segments; i++) {
+        x += dx + (Math.random() - 0.5) * 34;
+        y += dy;
+        points.push({ x, y });
+        if (depth < 2 && branchChance && Math.random() < branchChance) {
+            branches.push(buildJaggedPath(x, y, x + (Math.random() - 0.5) * 160, y + 60 + Math.random() * 80, 3, Math.max(1, width * 0.55), 0, depth + 1));
+        }
+    }
+    return { points, width, branches };
+}
+
+function spawnThunderStrike() {
+    if (roundOver) return;
+    const arenaW = arena.offsetWidth;
+    const arenaH = arena.offsetHeight;
+    const cx     = arenaW * (femaleWidth / 100);
+
+    resizeCanvases();
+
+    // 1-3 big sky bolts striking down near the clash point per thunderclap
+    const strikeCount = 1 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < strikeCount; i++) {
+        const targetX = cx + (Math.random() - 0.5) * 100;
+        const startX  = targetX + (Math.random() - 0.5) * 60;
+        skyBolts.push({
+            path: buildJaggedPath(startX, 0, targetX, arenaH, 9, 3 + Math.random() * 2, 0.35, 0),
+            life: 1,
+            decay: 0.1 + Math.random() * 0.06
+        });
+    }
+
+    // Screen-wide white flash to sell the thunderclap
+    thunderFlashEl.classList.remove('strike');
+    void thunderFlashEl.offsetWidth;
+    thunderFlashEl.classList.add('strike');
+
+    spawnFireworks(cx, arenaH * 0.15, '#ffffff', false);
+}
+
+function scheduleNextThunderStrike() {
+    const delay = 700 + Math.random() * 1300; // frequent — a proper thunderstorm, not a drizzle
+    setTimeout(() => {
+        spawnThunderStrike();
+        scheduleNextThunderStrike();
+    }, delay);
+}
+
+function drawBoltPath(ctx, path, alpha) {
+    ctx.save();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = path.width;
+    ctx.shadowColor = '#ffffff';
+    ctx.shadowBlur = 24;
+    ctx.globalAlpha = alpha;
+    ctx.beginPath();
+    ctx.moveTo(path.points[0].x, path.points[0].y);
+    for (let i = 1; i < path.points.length; i++) ctx.lineTo(path.points[i].x, path.points[i].y);
+    ctx.stroke();
+    ctx.restore();
+    path.branches.forEach(b => drawBoltPath(ctx, b, alpha * 0.8));
+}
+
+function drawSkyBolts() {
+    skyBolts = skyBolts.filter(b => b.life > 0);
+    skyBolts.forEach(b => {
+        drawBoltPath(lx, b.path, b.life);
+        b.life -= b.decay;
+    });
+}
+
 function drawLightning() {
     lx.clearRect(0, 0, lc.width, lc.height);
     lightningBolts = lightningBolts.filter(b => b.life > 0);
@@ -765,6 +917,7 @@ function drawLightning() {
     });
     // Constant crackle riding the clash line
     if (!roundOver && Math.random() < 0.85) spawnCenterBolt();
+    drawSkyBolts();
     requestAnimationFrame(drawLightning);
 }
 drawLightning();
@@ -858,8 +1011,12 @@ function render() {
     blueSide.style.width  = maleWidth   + '%';
     centerBar.style.left  = femaleWidth + '%';
     centerIcon.style.left = femaleWidth + '%';
-    pinkPct.textContent   = Math.round(femaleWidth) + '%';
-    bluePct.textContent   = Math.round(maleWidth)   + '%';
+    const pinkRounded = Math.round(femaleWidth);
+    const blueRounded = Math.round(maleWidth);
+    pinkPct.textContent   = pinkRounded + '%';
+    bluePct.textContent   = blueRounded + '%';
+    howtoPinkPct.textContent = pinkRounded + '%';
+    howtoBluePct.textContent = blueRounded + '%';
     updateImages();
     requestAnimationFrame(positionFighters);
 }
@@ -978,6 +1135,7 @@ function scheduleNextHelpBubbles() {
 resizeCanvases();
 render();
 scheduleNextHelpBubbles();
+scheduleNextThunderStrike();
 </script>
 </body>
 </html>
