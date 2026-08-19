@@ -20,11 +20,13 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Method Not Allowed' });
     }
     try {
-        const { giftName, uniqueId } = req.body;
+        const { giftName, uniqueId, count = 1 } = req.body;
         const command = GIFT_MAP[giftName];
         if (command) {
-            console.log(`[GIFT] ${uniqueId} sent "${giftName}" → ${command}`);
-            await pusher.trigger('tug-of-war', 'gift', { command });
+            console.log(`[GIFT] ${uniqueId} sent "${giftName}" x${count} → ${command}`);
+            for (let i = 0; i < count; i++) {
+                await pusher.trigger('tug-of-war', 'gift', { command });
+            }
         }
         return res.status(200).json({ ok: true });
     } catch (err) {
