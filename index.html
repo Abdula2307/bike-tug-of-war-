@@ -497,43 +497,6 @@
             opacity: 0.85;
         }
 
-        /* ── CONTROLS ── */
-        .controls {
-            height: clamp(70px, 18vw, 100px);
-            background: #0d1117;
-            border-top: 1px solid rgba(255,255,255,0.07);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: clamp(6px, 2vw, 14px);
-            z-index: 20;
-            position: relative;
-            padding: 0 8px;
-            flex-shrink: 0;
-        }
-
-        .btn {
-            padding: clamp(8px, 2vw, 12px) clamp(10px, 3vw, 22px);
-            font-family: 'Orbitron', monospace;
-            font-size: clamp(0.5rem, 1.8vw, 0.75rem);
-            font-weight: 700;
-            letter-spacing: 1px;
-            cursor: pointer;
-            border: none;
-            border-radius: 10px;
-            text-transform: uppercase;
-            transition: transform 0.1s, box-shadow 0.1s;
-            touch-action: manipulation;
-            flex: 1;
-            max-width: 130px;
-            white-space: nowrap;
-        }
-        .btn:active { transform: scale(0.92); }
-
-        .btn-pink       { background: linear-gradient(135deg, #c2185b, #e91e8c); color: white; box-shadow: 0 0 14px rgba(233,30,140,0.4); }
-        .btn-blue       { background: linear-gradient(135deg, #0277bd, #00b4ff); color: white; box-shadow: 0 0 14px rgba(0,180,255,0.4); }
-        .btn-super-pink { background: linear-gradient(135deg, #880e4f, #ff1744); color: white; box-shadow: 0 0 18px rgba(255,23,68,0.5); }
-        .btn-super-blue { background: linear-gradient(135deg, #01579b, #00e5ff); color: white; box-shadow: 0 0 18px rgba(0,229,255,0.5); }
     </style>
 </head>
 <body>
@@ -596,13 +559,6 @@
         <img src="image_871cc1.png" alt="Gift guide">
     </div>
 
-</div>
-
-<div class="controls">
-    <button class="btn btn-pink"       ontouchstart="moveTugOfWar('female')"       onclick="moveTugOfWar('female')">🌸 Pink +1</button>
-    <button class="btn btn-super-pink" ontouchstart="moveTugOfWar('super_female')" onclick="moveTugOfWar('super_female')">🔥 SUPER +3</button>
-    <button class="btn btn-super-blue" ontouchstart="moveTugOfWar('super_male')"   onclick="moveTugOfWar('super_male')">🔥 SUPER +3</button>
-    <button class="btn btn-blue"       ontouchstart="moveTugOfWar('male')"         onclick="moveTugOfWar('male')">💙 Blue +1</button>
 </div>
 
 <!-- Pusher SDK -->
