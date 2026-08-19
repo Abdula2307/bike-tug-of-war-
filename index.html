@@ -315,16 +315,20 @@
         /* ── HELP COMMENT SPEECH BUBBLES ── */
         .speech-bubble {
             position: absolute;
-            top: -66px;
+            top: -58px;
             left: 50%;
             transform: translateX(-50%) translateY(10px) scale(0.6);
-            white-space: nowrap;
+            white-space: normal;
+            text-align: center;
+            width: max-content;
+            max-width: min(46vw, 150px);
+            line-height: 1.25;
             font-family: 'Orbitron', monospace;
             font-weight: 900;
-            font-size: clamp(0.6rem, 2.2vw, 0.95rem);
-            letter-spacing: 1px;
-            padding: 8px 16px;
-            border-radius: 18px;
+            font-size: clamp(0.45rem, 1.6vw, 0.65rem);
+            letter-spacing: 0.5px;
+            padding: 6px 10px;
+            border-radius: 14px;
             background: rgba(15, 17, 26, 0.92);
             opacity: 0;
             pointer-events: none;
@@ -466,34 +470,6 @@
             100% { opacity: 0; transform: scale(1.2); }
         }
 
-        /* ── HOW TO PLAY (percentage banner) ── */
-        .how-to-play {
-            position: absolute;
-            top: 50px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(8,11,20,0.88);
-            border: 1px solid rgba(255,255,255,0.13);
-            border-radius: 14px;
-            padding: 8px 16px;
-            z-index: 20;
-            backdrop-filter: blur(12px);
-            display: flex;
-            gap: 16px;
-            align-items: center;
-            white-space: nowrap;
-        }
-        .how-to-play-title { font-size: 0.5rem; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,0.35); text-align: center; margin-bottom: 6px; }
-        .cmd-row { display: flex; align-items: center; gap: 7px; }
-        .cmd-chip { font-family: 'Orbitron', monospace; font-size: clamp(0.55rem, 1.8vw, 0.75rem); font-weight: 900; letter-spacing: 1px; padding: 4px 11px; border-radius: 8px; white-space: nowrap; }
-        .cmd-chip.pink-cmd { background: rgba(255,45,120,0.15); border: 1.5px solid var(--pink); color: #ffb3d0; text-shadow: 0 0 10px var(--pink); }
-        .cmd-chip.blue-cmd { background: rgba(0,180,255,0.12); border: 1.5px solid var(--blue); color: #b3e8ff; text-shadow: 0 0 10px var(--blue); }
-        .cmd-label { font-size: clamp(0.5rem, 1.6vw, 0.65rem); color: rgba(255,255,255,0.55); white-space: nowrap; }
-        .cmd-pct { font-family: 'Orbitron', monospace; font-size: clamp(0.55rem, 1.8vw, 0.75rem); font-weight: 900; margin-left: 4px; }
-        .cmd-chip.pink-cmd .cmd-pct { color: #ffb3d0; text-shadow: 0 0 8px var(--pink); }
-        .cmd-chip.blue-cmd .cmd-pct { color: #b3e8ff; text-shadow: 0 0 8px var(--blue); }
-        .cmd-divider { width: 1px; height: 32px; background: rgba(255,255,255,0.1); }
-
         /* ── LEGEND ── */
         .legend {
             position: absolute;
@@ -597,11 +573,11 @@
 
     <div class="fighters-wrapper" id="fighters-wrapper">
         <div class="fighter-slot girl-slot" id="girl-slot">
-            <div class="speech-bubble bubble-girl" id="girl-bubble">SEND GIFT — GIRLS PLZ HELP 🙏</div>
+            <div class="speech-bubble bubble-girl" id="girl-bubble">GIRLS PLZ HELP 🙏</div>
             <img src="girl.png" alt="Girl" class="bike-img" id="girl-img">
         </div>
         <div class="fighter-slot guy-slot" id="guy-slot">
-            <div class="speech-bubble bubble-guy" id="guy-bubble">SEND GIFT — BOYS PLZ HELP 🙏</div>
+            <div class="speech-bubble bubble-guy" id="guy-bubble">BOYS PLZ HELP 🙏</div>
             <img src="guy.png" alt="Guy" class="bike-img" id="guy-img">
         </div>
     </div>
@@ -614,24 +590,6 @@
     <div id="thunder-flash"></div>
 
     <div class="winner-flash" id="winner-flash"></div>
-
-    <div class="how-to-play">
-        <div>
-            <div class="how-to-play-title">How to Play</div>
-            <div class="cmd-row">
-                <div class="cmd-chip pink-cmd">GIRL <span class="cmd-pct" id="howto-pink-pct">50%</span></div>
-                <div class="cmd-label">Girls 🌸</div>
-            </div>
-        </div>
-        <div class="cmd-divider"></div>
-        <div>
-            <div class="how-to-play-title">&nbsp;</div>
-            <div class="cmd-row">
-                <div class="cmd-chip blue-cmd">BOY <span class="cmd-pct" id="howto-blue-pct">50%</span></div>
-                <div class="cmd-label">Boys 💙</div>
-            </div>
-        </div>
-    </div>
 
     <div class="legend">
         <div class="legend-title">Gift guide</div>
@@ -703,8 +661,6 @@ const pinkSide    = document.getElementById('pink-side');
 const blueSide    = document.getElementById('blue-side');
 const pinkPct     = document.getElementById('pink-pct');
 const bluePct     = document.getElementById('blue-pct');
-const howtoPinkPct = document.getElementById('howto-pink-pct');
-const howtoBluePct = document.getElementById('howto-blue-pct');
 const girlImg     = document.getElementById('girl-img');
 const guyImg      = document.getElementById('guy-img');
 const girlSlot    = document.getElementById('girl-slot');
@@ -1017,8 +973,6 @@ function render() {
     const blueRounded = Math.round(maleWidth);
     pinkPct.textContent   = pinkRounded + '%';
     bluePct.textContent   = blueRounded + '%';
-    howtoPinkPct.textContent = pinkRounded + '%';
-    howtoBluePct.textContent = blueRounded + '%';
     updateImages();
     requestAnimationFrame(positionFighters);
 }
